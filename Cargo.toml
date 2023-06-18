@@ -1,0 +1,10 @@
+[package]
+name = "something-awful"
+version = "0.1.0"
+edition = "2021"
+license-file = "LICENSE"
+description = "Unofficial client to the Something Awful forums"
+homepage = "https://github.com/yuhanfang/something-awful"
+repository = "https://github.com/yuhanfang/something-awful"
+
+[dependencies]
