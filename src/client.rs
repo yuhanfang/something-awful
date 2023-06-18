@@ -1,4 +1,4 @@
-use crate::{post::Post, thread::Thread, Error};
+use crate::{post_list::Post, thread_list::Thread, Error};
 use reqwest_cookie_store::{CookieStore, CookieStoreMutex};
 use std::{
     io::{BufRead, Write},
@@ -6,6 +6,7 @@ use std::{
 };
 use url::Url;
 
+/// Manages access to the Something Awful forums.
 pub struct Client {
     base: Url,
     client: reqwest::Client,
@@ -14,32 +15,33 @@ pub struct Client {
 
 /// References a forum user.
 pub enum User<'a> {
-    /// The current logged-in user.
+    /// References the current logged-in user.
     CurrentUser,
 
-    /// A user ID.
+    /// References a user ID.
     UserID(&'a str),
 
-    /// A username.
+    /// References a username.
     Username(&'a str),
 }
 
-/// References a page of posts.
-pub enum PostIndex {
-    /// The beginning of the posts.
+/// References a page of posts within a thread.
+pub enum ThreadPage {
+    /// The first page of the thread.
     First,
 
-    /// The last posts.
+    /// The last page of the thread.
     Last,
 
-    /// New posts.
+    /// The first unseen page of the thread.
     New,
 
-    /// A specific page of posts.
+    /// A specific page of the thread. This should be between 1 and the maximum
+    /// page inclusive.
     Page(usize),
 }
 
-/// Public or private user profile.
+/// Contains all data in a user's public profile.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Profile {
     pub userid: i64,
@@ -65,6 +67,8 @@ pub struct Profile {
 }
 
 impl Client {
+    /// Constructs an unauthenticated client. The user must either login or load
+    /// credentials before using other API functions.
     pub fn new() -> Result<Client, Error> {
         let cookie_store = Arc::new(CookieStoreMutex::new(CookieStore::new(None)));
         Ok(Client {
@@ -98,7 +102,7 @@ impl Client {
         }
     }
 
-    /// Returns the profile of a user. If there is no user, returns None.
+    /// Returns the profile of a user, or None if that user cannot be found.
     pub async fn fetch_profile<'a>(&self, user: User<'a>) -> Result<Option<Profile>, Error> {
         let query = match user {
             User::CurrentUser => vec![("action", "getinfo"), ("json", "1")],
@@ -128,27 +132,32 @@ impl Client {
         }
     }
 
-    pub async fn fetch_posts(&self, thread_id: &str, index: PostIndex) -> Result<Vec<Post>, Error> {
+    /// Returns all posts on a given page of a thread.
+    pub async fn fetch_posts(
+        &self,
+        thread_id: &str,
+        index: ThreadPage,
+    ) -> Result<Vec<Post>, Error> {
         let mut _page_string = None;
         let query = match index {
-            PostIndex::First => {
+            ThreadPage::First => {
                 vec![("threadid", thread_id), ("perpage", "40")]
             }
-            PostIndex::Last => {
+            ThreadPage::Last => {
                 vec![
                     ("threadid", thread_id),
                     ("perpage", "40"),
                     ("goto", "lastpost"),
                 ]
             }
-            PostIndex::New => {
+            ThreadPage::New => {
                 vec![
                     ("threadid", thread_id),
                     ("perpage", "40"),
                     ("goto", "newpost"),
                 ]
             }
-            PostIndex::Page(page) => {
+            ThreadPage::Page(page) => {
                 _page_string = Some(format!("{page}"));
                 vec![
                     ("threadid", thread_id),
@@ -166,10 +175,10 @@ impl Client {
             .text()
             .await?;
 
-        Post::parse(&response)
+        Post::parse_list(&response)
     }
 
-    /// Returns all bookmarked threads.
+    /// Returns metadata about all bookmarked threads.
     pub async fn fetch_bookmarked_threads(&self) -> Result<Vec<Thread>, Error> {
         let mut bookmarked_threads = Vec::new();
         let mut page = 1;
@@ -187,7 +196,7 @@ impl Client {
                 .text()
                 .await?;
 
-            let mut threads = Thread::parse(&response)?;
+            let mut threads = Thread::parse_list(&response)?;
             let fetch_next = threads.len() == 40;
             bookmarked_threads.append(&mut threads);
             if fetch_next {

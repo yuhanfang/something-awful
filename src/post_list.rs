@@ -1,24 +1,19 @@
 use crate::Error;
 
+/// Represents a specific post within a thread.
 #[derive(Debug)]
 pub struct Post {
     pub id: String,
-    pub index: String,
+    pub index: i64,
     pub author_username: String,
     pub author_registration_date: String,
     pub post_date: String,
     pub post_body: String,
 }
 
-/// A part of a post body.
-pub enum Element {
-    Text(String),
-    Link { destination: String, label: String },
-    Image(String),
-}
-
 impl Post {
-    pub fn parse(document: &str) -> Result<Vec<Post>, Error> {
+    // Parses all posts on a thread page.
+    pub fn parse_list(document: &str) -> Result<Vec<Post>, Error> {
         let mut posts = Vec::new();
         let document = scraper::Html::parse_document(document);
         let selector = scraper::Selector::parse(r#"table.post"#).expect("BUG: illegal selector");
@@ -49,7 +44,9 @@ impl Post {
             let Some(index) = post.value().attr("data-idx") else {
                 return Err(parsing_error);
             };
-            let index = index.to_owned();
+            let Ok(index) = index.parse() else {
+                return Err(parsing_error);
+            };
 
             let selector =
                 scraper::Selector::parse(r#"dl.userinfo>dt"#).expect("BUG: illegal selector");
@@ -86,13 +83,6 @@ impl Post {
                 return Err(parsing_error);
             };
             let post_body = post_body.inner_html();
-
-            /*
-             * Do this to render the inside based on element.
-            for item in post_body.children() {
-                println!("post child = {:?}", item.value());
-            }
-            */
 
             posts.push(Post {
                 id,

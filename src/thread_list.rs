@@ -1,5 +1,6 @@
 use crate::Error;
 
+/// Represents a single thread within a list of threads.
 #[derive(Debug)]
 pub struct Thread {
     pub id: String,
@@ -16,7 +17,8 @@ pub struct Thread {
 }
 
 impl Thread {
-    pub fn parse(document: &str) -> Result<Vec<Thread>, Error> {
+    /// Parses all threads on a list of threads within a page.
+    pub fn parse_list(document: &str) -> Result<Vec<Thread>, Error> {
         let mut threads = Vec::new();
         let document = scraper::Html::parse_document(document);
         let selector =

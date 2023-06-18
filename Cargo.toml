@@ -8,3 +8,14 @@ homepage = "https://github.com/yuhanfang/something-awful"
 repository = "https://github.com/yuhanfang/something-awful"
 
 [dependencies]
+clap = { version = "4", features = ["derive"] }
+cookie_store = "0.20.0"
+html2md = "0.2.14"
+reqwest = { version = "0.11.18", features = ["rustls-tls", "cookies", "json"] }
+reqwest_cookie_store = "0.6.0"
+rpassword = "7.2.0"
+serde = { version = "1", features = ["derive"] }
+scraper = "0.16.0"
+tokio = { version = "1", features = ["full"] }
+thiserror = "1"
+url = "2.4.0"
