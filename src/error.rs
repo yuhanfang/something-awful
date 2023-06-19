@@ -20,4 +20,7 @@ pub enum Error {
 
     #[error("unable to parse post: {0}")]
     PostParsingError(String),
+
+    #[error("unable to parse reply")]
+    ReplyParsingError,
 }

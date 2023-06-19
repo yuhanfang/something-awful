@@ -12,7 +12,7 @@ pub struct Post {
 }
 
 impl Post {
-    // Parses all posts on a thread page.
+    /// Parses all posts on a thread page.
     pub fn parse_list(document: &str) -> Result<Vec<Post>, Error> {
         let mut posts = Vec::new();
         let document = scraper::Html::parse_document(document);

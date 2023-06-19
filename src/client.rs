@@ -1,4 +1,9 @@
-use crate::{post_list::Post, thread_list::Thread, Error};
+use crate::{
+    post_list::Post,
+    reply::{Reply, ReplyParams},
+    thread_list::Thread,
+    Error,
+};
 use reqwest_cookie_store::{CookieStore, CookieStoreMutex};
 use std::{
     io::{BufRead, Write},
@@ -206,6 +211,34 @@ impl Client {
             }
         }
         Ok(bookmarked_threads)
+    }
+
+    /// Posts a reply to a given thread.
+    pub async fn post_reply(&self, thread_id: &str, reply: Reply) -> Result<(), Error> {
+        let response = self
+            .client
+            .get(self.base.join("newreply.php")?)
+            .query(&[("action", "newreply"), ("threadid", thread_id)])
+            .send()
+            .await?
+            .text()
+            .await?;
+
+        let params = ReplyParams::parse(&response)?;
+        let form = params.into_form(reply)?;
+
+        let response = self
+            .client
+            .post(self.base.join("newreply.php")?)
+            .multipart(form)
+            .send()
+            .await?;
+
+        if response.error_for_status().is_err() {
+            Err(Error::LoginError)
+        } else {
+            Ok(())
+        }
     }
 
     /// Saves credentials to JSON. The user must be logged in for the

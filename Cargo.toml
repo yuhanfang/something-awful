@@ -11,7 +11,7 @@ repository = "https://github.com/yuhanfang/something-awful"
 clap = { version = "4", features = ["derive"] }
 cookie_store = "0.20.0"
 html2md = "0.2.14"
-reqwest = { version = "0.11.18", features = ["rustls-tls", "cookies", "json"] }
+reqwest = { version = "0.11.18", features = ["rustls-tls", "cookies", "json", "multipart"] }
 reqwest_cookie_store = "0.6.0"
 rpassword = "7.2.0"
 serde = { version = "1", features = ["derive"] }
