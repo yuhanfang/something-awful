@@ -1,6 +1,7 @@
 /// Tails your bookmarked Something Awful threads.
 use clap::Parser;
 use something_awful::client::{Client, ThreadPage, User};
+use std::collections::HashSet;
 
 #[derive(Debug, clap::Parser)]
 struct Args {
@@ -55,18 +56,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
         }
     }
 
+    let mut seen = HashSet::new();
     loop {
         let threads = client.fetch_bookmarked_threads().await?;
         for thread in threads.into_iter() {
             if thread.unread > 0 {
                 let posts = client.fetch_posts(&thread.id, ThreadPage::New).await?;
                 for post in posts.into_iter() {
+                    if !seen.insert((thread.id.clone(), post.id.clone())) {
+                        continue;
+                    }
+
+                    println!();
                     println!("----------");
                     println!(r#" /\_/\ "#);
                     println!(r#"( o.o )"#);
                     println!(r#" > ^ <"#);
                     println!();
                     println!("thread: {}", thread.title);
+                    println!("url: https://forums.somethingawful.com/showthread.php?threadid={}&goto=newpost", thread.id);
                     println!("author: {}", post.author_username);
                     println!("time: {}", post.post_date);
                     println!("----------");
