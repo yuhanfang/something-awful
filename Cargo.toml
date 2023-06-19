@@ -1,6 +1,6 @@
 [package]
 name = "something-awful"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 license-file = "LICENSE"
 description = "Unofficial client to the Something Awful forums"
@@ -15,6 +15,7 @@ reqwest = { version = "0.11.18", features = ["rustls-tls", "cookies", "json"] }
 reqwest_cookie_store = "0.6.0"
 rpassword = "7.2.0"
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 scraper = "0.16.0"
 tokio = { version = "1", features = ["full"] }
 thiserror = "1"

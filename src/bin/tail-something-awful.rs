@@ -1,7 +1,7 @@
 /// Tails your bookmarked Something Awful threads.
 use clap::Parser;
 use something_awful::client::{Client, ThreadPage, User};
-use std::collections::HashSet;
+use std::collections::{hash_map::Entry, HashMap};
 
 #[derive(Debug, clap::Parser)]
 struct Args {
@@ -10,6 +10,10 @@ struct Args {
     /// for username and password.
     #[arg(long, default_value = ".something-awful.token")]
     auth: Option<String>,
+
+    /// History file. If provided, seen thread history will be cached here.
+    #[arg(long, default_value = ".something-awful.history")]
+    history: Option<String>,
 
     /// Time to sleep between rendering posts. Set to a higher value if you
     /// would like extra time to process each message as it scrolls by.
@@ -56,15 +60,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
         }
     }
 
-    let mut seen = HashSet::new();
+    let mut seen: HashMap<String, i64> = HashMap::new();
+    if let Some(history) = args.history.as_ref() {
+        if let Ok(file) = std::fs::File::open(history) {
+            // If the file exists, validate it is the correct format.
+            seen = serde_json::from_reader(file)?;
+        }
+    }
+
     loop {
         let threads = client.fetch_bookmarked_threads().await?;
         for thread in threads.into_iter() {
             if thread.unread > 0 {
                 let posts = client.fetch_posts(&thread.id, ThreadPage::New).await?;
                 for post in posts.into_iter() {
-                    if !seen.insert((thread.id.clone(), post.id.clone())) {
-                        continue;
+                    match seen.entry(thread.id.clone()) {
+                        Entry::Occupied(mut existing) => {
+                            if *existing.get() >= post.index {
+                                // We have seen this post before.
+                                continue;
+                            } else {
+                                // We're caught up now.
+                                existing.insert(post.index);
+                            }
+                        }
+                        Entry::Vacant(vacant) => {
+                            vacant.insert(post.index);
+                        }
                     }
 
                     println!();
@@ -94,5 +116,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
             args.sleep_between_refresh_millis,
         ))
         .await;
+
+        if let Some(history) = args.history.as_ref() {
+            let file = std::fs::File::create(history)?;
+            serde_json::to_writer(file, &seen)?;
+        }
     }
 }

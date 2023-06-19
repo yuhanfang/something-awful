@@ -27,3 +27,27 @@ See
 [tail-something-awful.rs](https://github.com/yuhanfang/something-awful/blob/main/src/bin/tail-something-awful.rs)
 for an end-to-end example that uses the client to tail updates to bookmarked
 threads.
+
+Put Something Awful in a tmux pane and never get anything done at work ever
+again! Example output:
+
+```sh
+$ ./tail-something-awful
+Logged in.
+
+----------
+ /\_/\
+( o.o )
+ > ^ <
+
+thread: here is an example title
+url: https://forums.somethingawful.com/showthread.php?threadid=12345&goto=newpost
+author: Somebody Cool
+time: Jun 18, 2023 22:08
+----------
+Read a markdown-formatted synopsis from the comfort of your terminal!
+
+The program caches your credentials by default in .something-awful.token and
+also caches seen post history in .something-awful.history to avoid showing
+duplicate messages.
+```
